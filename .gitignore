@@ -4,3 +4,5 @@ pdfs
 __pycache__
 result.*
 *.jpg
+.history
+stu_id.txt

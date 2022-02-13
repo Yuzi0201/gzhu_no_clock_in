@@ -5,17 +5,19 @@ import re
 import json
 import time
 from datetime import datetime
+from login_new import login_new
 
 session = msession.session
 
 
-def clock_in(stu_id, token, chat_id):
+def clock_in(stu_id, pwd):
     load_from_cookies(stu_id)
 
-    res = session.get('http://yqtb.gzhu.edu.cn/infoplus/form/XNYQSB/start')
+    res = session.get('https://yqtb.gzhu.edu.cn/infoplus/form/XNYQSB/start')
 
     # get csrfToken
-    csrfToken = re.findall(r'<meta itemscope="csrfToken" content="(?P<token>.*?)">', res.text)
+    csrfToken = re.findall(
+        r'<meta itemscope="csrfToken" content="(?P<token>.*?)">', res.text)
 
     # before getting the URL with stepId
     form_get_url = {
@@ -24,7 +26,8 @@ def clock_in(stu_id, token, chat_id):
         'csrfToken': csrfToken[0],
         'lang': 'zh'
     }
-    res_get_url = session.post('http://yqtb.gzhu.edu.cn/infoplus/interface/start', data=form_get_url)
+    res_get_url = session.post(
+        'https://yqtb.gzhu.edu.cn/infoplus/interface/start', data=form_get_url)
 
     # get URL with stepId from response
     url = json.loads(res_get_url.text)['entities'][0]
@@ -40,8 +43,10 @@ def clock_in(stu_id, token, chat_id):
         'lang': 'zh',
         'csrfToken': csrfToken[0]
     }
-    session.headers.update({'referer': 'http://yqtb.gzhu.edu.cn/infoplus/form/XNYQSB/start'})
-    data = session.post(url='http://yqtb.gzhu.edu.cn/infoplus/interface/render', data=form)
+    session.headers.update(
+        {'referer': 'https://yqtb.gzhu.edu.cn/infoplus/form/XNYQSB/start'})
+    data = session.post(
+        url='https://yqtb.gzhu.edu.cn/infoplus/interface/render', data=form)
     data_json = json.loads(data.text)['entities'][0]
 
     # get boundField (dummy)
@@ -52,7 +57,7 @@ def clock_in(stu_id, token, chat_id):
     field = field[:-1]
 
     form_data = data_json['data']
-    
+
     # add some entries to form
     form_data['fieldJKMsfwlm'] = '1'
     form_data['fieldYQJLsfjcqtbl'] = '2'
@@ -61,7 +66,8 @@ def clock_in(stu_id, token, chat_id):
 
     # convert timestamp to datetime and it will be displayed later
     timestamp = form_data['fieldSQSJ'] + 8 * 3600
-    _datetime = datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+    _datetime = datetime.utcfromtimestamp(
+        timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
     form = {
         'actionId': '1',
@@ -76,11 +82,14 @@ def clock_in(stu_id, token, chat_id):
         'lang': 'zh'
     }
 
-    submit = session.post('http://yqtb.gzhu.edu.cn/infoplus/interface/doAction', data=form)
+    submit = session.post(
+        'https://yqtb.gzhu.edu.cn/infoplus/interface/doAction', data=form)
 
     if '打卡成功' in submit.text:
-        print ('打卡成功')
-        exit(0)
+        print('打卡成功')
+        # exit(0)
     else:
-        print ('打卡失败')
-        exit(1)
+        print('打卡失败，重新打卡')
+        login_new(stu_id, pwd)
+        clock_in(stu_id, pwd)
+        # exit(1)
