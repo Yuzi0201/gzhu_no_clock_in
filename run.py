@@ -20,7 +20,7 @@ def main():
     print('开始打卡...')
     print()
 
-    MAX_RETRY_COUNT = 2
+    MAX_RETRY_COUNT = 5
 
     summary = {}
 
